@@ -1,4 +1,4 @@
-module github.com/fsouza/fake-gcs-server
+module github.com/crewjam/fake-gcs-server
 
 require (
 	cloud.google.com/go v0.39.0
