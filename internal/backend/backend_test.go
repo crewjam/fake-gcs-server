@@ -1,3 +1,7 @@
+// Copyright 2018 Francisco Souza. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package backend
 
 import (
@@ -32,6 +36,7 @@ func testForStorageBackends(t *testing.T, test func(t *testing.T, storage Storag
 	backends, cleanup := makeStorageBackends(t)
 	defer cleanup()
 	for backendName, storage := range backends {
+		storage := storage
 		t.Run(fmt.Sprintf("storage backend %s", backendName), func(t *testing.T) {
 			test(t, storage)
 		})
@@ -55,6 +60,7 @@ func TestObjectCRUD(t *testing.T) {
 	const objectName = "video/hi-res/best_video_1080p.mp4"
 	content1 := []byte("content1")
 	const crc1 = "crc1"
+	const md51 = "md51"
 	content2 := []byte("content2")
 	testForStorageBackends(t, func(t *testing.T, storage Storage) {
 		// Get in non-existent case
@@ -64,7 +70,7 @@ func TestObjectCRUD(t *testing.T) {
 		err = storage.DeleteObject(bucketName, objectName)
 		shouldError(t, err, "object successfully delete before being created")
 		// Create in non-existent case
-		noError(t, storage.CreateObject(Object{BucketName: bucketName, Name: objectName, Content: content1, Crc32c: crc1}))
+		noError(t, storage.CreateObject(Object{BucketName: bucketName, Name: objectName, Content: content1, Crc32c: crc1, Md5Hash: md51}))
 		// Get in existent case
 		obj, err := storage.GetObject(bucketName, objectName)
 		noError(t, err)
@@ -76,6 +82,9 @@ func TestObjectCRUD(t *testing.T) {
 		}
 		if obj.Crc32c != crc1 {
 			t.Errorf("wrong crc\n want %q\ngot  %q", crc1, obj.Crc32c)
+		}
+		if obj.Md5Hash != md51 {
+			t.Errorf("wrong md5\n want %q\ngot  %q", md51, obj.Md5Hash)
 		}
 		if !bytes.Equal(obj.Content, content1) {
 			t.Errorf("wrong object content\n want %q\ngot  %q", content1, obj.Content)
@@ -94,6 +103,17 @@ func TestObjectCRUD(t *testing.T) {
 		if !bytes.Equal(obj.Content, content2) {
 			t.Errorf("wrong object content\n want %q\ngot  %q", content2, obj.Content)
 		}
+
+		// List objects
+		objs, err := storage.ListObjects(bucketName)
+		noError(t, err)
+		if len(objs) != 1 {
+			t.Errorf("wrong number of objects returned\nwant 1\ngot  %d", len(objs))
+		}
+		if objs[0].Name != objectName {
+			t.Errorf("wrong object name\nwant %q\ngot  %q", objectName, objs[0].Name)
+		}
+
 		// Delete in existent case
 		err = storage.DeleteObject(bucketName, objectName)
 		noError(t, err)
