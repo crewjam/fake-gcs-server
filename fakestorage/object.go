@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/fsouza/fake-gcs-server/internal/backend"
+	"github.com/crewjam/fake-gcs-server/internal/backend"
 	"github.com/gorilla/mux"
 )
 
